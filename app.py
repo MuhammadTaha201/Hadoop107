@@ -1,49 +1,39 @@
 # -*- coding: utf-8 -*-
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import avg
+import pandas as pd
 
 # -------------------------------
-# 1. Create Spark Session
+# 1. Load CSV (local file)
 # -------------------------------
-spark = SparkSession.builder \
-    .appName("Climate Data Analysis") \
-    .getOrCreate()
+file_path = "preprocessed_climate_data.csv"   # make sure CSV is in same folder
+
+df = pd.read_csv(file_path)
 
 # -------------------------------
-# 2. Read CSV from HDFS
-# -------------------------------
-# Replace "yourname" with your Hadoop username
-file_path = "https://raw.githubusercontent.com/MuhammadTaha201/Hadoop107/refs/heads/main/preprocessed_climate_data.csv"
-
-df = spark.read.csv(
-    file_path,
-    header=True,       # first row is header
-    inferSchema=True   # detect column types automatically
-)
-
-# -------------------------------
-# 3. Show Data
+# 2. Show Data
 # -------------------------------
 print("First 10 rows of dataset:")
-df.show(10)
+print(df.head(10))
 
-print("Schema of dataset:")
-df.printSchema()
+print("\nDataset Info:")
+print(df.info())
 
 # -------------------------------
-# 4. Example Analysis
+# 3. Example Analysis
 # -------------------------------
 # Average temperature per month
-avg_temp = df.groupBy("Month").agg(avg("Temperature").alias("Avg_Temperature"))
-print("Average Temperature per Month:")
-avg_temp.show()
+avg_temp = df.groupby("Month")["Temperature"].mean().reset_index()
+print("\nAverage Temperature per Month:")
+print(avg_temp)
 
-# Average CO2 levels per location
-avg_co2 = df.groupBy("Location").agg(avg("Co2_levels").alias("Avg_CO2"))
-print("Average CO2 per Location:")
-avg_co2.show()
+# Average CO2 per location
+avg_co2 = df.groupby("Location")["Co2_levels"].mean().reset_index()
+print("\nAverage CO2 per Location:")
+print(avg_co2)
 
 # -------------------------------
-# 5. Stop Spark
+# 4. Save Results
 # -------------------------------
-spark.stop()
+avg_temp.to_csv("avg_temp_per_month.csv", index=False)
+avg_co2.to_csv("avg_co2_per_location.csv", index=False)
+
+print("\nResults saved as CSV files: avg_temp_per_month.csv, avg_co2_per_location.csv")
